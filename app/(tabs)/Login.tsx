@@ -11,6 +11,7 @@ import {
   TouchableOpacity
 } from "react-native";
 import { auth } from "../../firebaseConfig";
+import { useCartStore } from "./store";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -22,9 +23,14 @@ export default function LoginScreen() {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      Alert.alert("Login successful!");
-      router.replace("/"); // hoặc trang chính sau đăng nhập
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Gọi fetchCartFromFirestore để tải giỏ hàng đúng người dùng
+      await useCartStore.getState().fetchCartFromFirestore();
+
+      Alert.alert("Đăng nhập thành công");
+      router.replace("/"); // Chuyển về trang chính sau đăng nhập
     } catch (error: any) {
       console.error("Login error:", error);
       Alert.alert("Login failed", error.message);

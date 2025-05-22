@@ -20,7 +20,7 @@ export default function SignUpScreen() {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert("Registration successful!");
+      Alert.alert("Đăng kí thành công");
       router.push("/Login"); // quay lại trang đăng nhập
     } catch (error: any) {
       Alert.alert("Registration failed", error.message);
