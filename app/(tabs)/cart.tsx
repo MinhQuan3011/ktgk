@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
-    Alert,
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useCartStore } from "./store";
 export default function Cart() {
@@ -113,10 +113,14 @@ export default function Cart() {
 
             <TouchableOpacity
   style={styles.checkoutBtn}
-  onPress={() => router.push("/checkout")}
+  onPress={() => router.push({
+    pathname: "/checkout",
+    params: { amount: grandTotal.toString() }, // chuyền grandTotal sang checkout
+  })}
 >
   <Text style={styles.checkoutText}>Thanh toán</Text>
 </TouchableOpacity>
+
           </View>
         </View>
       )}

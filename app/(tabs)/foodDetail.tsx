@@ -2,30 +2,30 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { getAuth } from "firebase/auth";
 import {
-    addDoc,
-    collection,
-    deleteDoc,
-    doc,
-    getDocs,
-    orderBy,
-    query,
-    serverTimestamp,
-    updateDoc,
-    where,
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import CartIconWithBadge from "./cartIconWithBadge";
@@ -138,6 +138,7 @@ export default function FoodDetail() {
       await addDoc(collection(db, "feedbacks"), {
         foodId: idStr,
         foodName: nameStr,
+        foodImage: imageUri,
         rating,
         comment: comment.trim(),
         userId: currentUser.uid,
@@ -245,12 +246,23 @@ export default function FoodDetail() {
           }
           activeOpacity={0.7}
         >
+
           <Ionicons name="arrow-back" size={28} color="#3f51b5" />
         </TouchableOpacity>
+
+            
+
         <Text style={styles.headerTitle}>Chi tiết món ăn</Text>
+          
         <TouchableOpacity onPress={() => router.push("/cart")}>
           <CartIconWithBadge />
         </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push("/")}
+          >
+            <Ionicons name="home" size={28} color="crimson" />
+          </TouchableOpacity>
       </View>
 
       {imageUri ? (
@@ -274,169 +286,168 @@ export default function FoodDetail() {
         >
           <Text style={styles.addToCartText}>+ Thêm vào giỏ hàng</Text>
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.feedbackSection}>
-        <Text style={styles.sectionTitle}>Đánh giá và bình luận</Text>
+        <View style={styles.feedbackSection}>
+          <Text style={styles.sectionTitle}>Đánh giá và bình luận</Text>
 
-        {/* Input feedback */}
-        {!editingId && (
-          <>
-            <View style={styles.ratingInputRow}>
-              <Text style={{ marginRight: 10 }}>Số sao:</Text>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity
-                  key={star}
-                  onPress={() => setRating(star)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name={star <= rating ? "star" : "star-outline"}
-                    size={28}
-                    color="#fbc02d"
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Viết bình luận..."
-              value={comment}
-              onChangeText={setComment}
-              multiline
-            />
-            <TouchableOpacity
-              style={styles.sendButton}
-              onPress={handleSendFeedback}
-              disabled={sendingFeedback}
-            >
-              {sendingFeedback ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.sendButtonText}>Gửi bình luận</Text>
-              )}
-            </TouchableOpacity>
-          </>
-        )}
-
-        {/* Editing feedback */}
-        {editingId && (
-          <>
-            <View style={styles.ratingInputRow}>
-              <Text style={{ marginRight: 10 }}>Số sao:</Text>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity
-                  key={star}
-                  onPress={() => setEditingRating(star)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons
-                    name={star <= editingRating ? "star" : "star-outline"}
-                    size={28}
-                    color="#fbc02d"
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Chỉnh sửa bình luận..."
-              value={editingComment}
-              onChangeText={setEditingComment}
-              multiline
-            />
-            <View style={styles.editButtonsRow}>
-              <TouchableOpacity
-                style={[styles.sendButton, { backgroundColor: "#ccc" }]}
-                onPress={cancelEditing}
-                disabled={processingEdit}
+          {/* Rating stars input */}
+          <View style={styles.ratingStars}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Pressable
+                key={star}
+                onPress={() => setRating(star)}
+                hitSlop={8}
+                style={{ marginRight: 6 }}
               >
-                <Text>Hủy</Text>
-              </TouchableOpacity>
+                <Ionicons
+                  name={star <= rating ? "star" : "star-outline"}
+                  size={28}
+                  color="#f1c40f"
+                />
+              </Pressable>
+            ))}
+          </View>
 
-              <TouchableOpacity
-                style={styles.sendButton}
-                onPress={saveEditing}
-                disabled={processingEdit}
-              >
-                {processingEdit ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.sendButtonText}>Lưu</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
+          <TextInput
+            style={styles.textInput}
+            multiline
+            placeholder="Viết bình luận của bạn..."
+            value={comment}
+            onChangeText={setComment}
+            editable={!sendingFeedback}
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, sendingFeedback && { opacity: 0.6 }]}
+            onPress={handleSendFeedback}
+            disabled={sendingFeedback}
+          >
+            {sendingFeedback ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.sendButtonText}>Gửi bình luận</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
-        <View style={{ marginTop: 20 }}>
-          <Text style={styles.sectionTitle}>Danh sách bình luận</Text>
+        <View style={styles.feedbackList}>
+          <Text style={styles.sectionTitle}>Bình luận</Text>
           {loadingFeedbacks ? (
-            <ActivityIndicator size="large" />
+            <ActivityIndicator size="large" color="#3f51b5" />
           ) : feedbacks.length === 0 ? (
-            <Text>Chưa có bình luận nào.</Text>
+            <Text style={{ fontStyle: "italic" }}>Chưa có bình luận nào.</Text>
           ) : (
-            feedbacks.map((fb) => (
-              <View key={fb.id} style={styles.feedbackItem}>
-                <View style={styles.feedbackHeader}>
-                  <Text style={styles.feedbackUser}>{fb.userEmail}</Text>
-                  <View style={styles.feedbackRating}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Ionicons
-                        key={star}
-                        name={star <= fb.rating ? "star" : "star-outline"}
-                        size={18}
-                        color="#fbc02d"
-                      />
-                    ))}
-                  </View>
-                  {/* 3-dot menu chỉ hiện cho feedback của user hiện tại, và khi không đang sửa */}
-                  {currentUser?.uid === fb.userId && editingId !== fb.id && (
-                    <View style={styles.menuWrapper}>
+            feedbacks.map((fb) => {
+              const isOwner = currentUser?.uid === fb.userId;
+              const isEditingThis = editingId === fb.id;
+
+              return (
+                <View key={fb.id} style={styles.feedbackItem}>
+                  <View style={styles.feedbackHeader}>
+                    <Text style={styles.feedbackUser}>
+                      {fb.userEmail || "Người dùng"}
+                    </Text>
+
+                    {/* Show menu button only if user owns this feedback */}
+                    {isOwner && (
                       <TouchableOpacity
                         onPress={() =>
                           setMenuVisibleForId(menuVisibleForId === fb.id ? null : fb.id)
                         }
-                        style={styles.menuButton}
-                        activeOpacity={0.7}
+                        hitSlop={8}
+                        style={{ padding: 4 }}
                       >
-                        <Ionicons name="ellipsis-vertical" size={24} color="#333" />
+                        <Ionicons name="ellipsis-vertical" size={20} color="#333" />
                       </TouchableOpacity>
+                    )}
+                  </View>
 
-                      {/* Popup menu */}
-                      {menuVisibleForId === fb.id && (
-                        <TouchableOpacity
-                          style={styles.menuOverlay}
-                          activeOpacity={1}
-                          onPress={() => setMenuVisibleForId(null)}
-                        >
-                          <View style={styles.popupMenu}>
-                            <Pressable
-                              onPress={() => startEditing(fb)}
-                              style={styles.popupMenuItem}
-                            >
-                              <Text style={styles.popupMenuText}>Sửa</Text>
-                            </Pressable>
-                            <Pressable
-                              onPress={() => deleteFeedback(fb.id)}
-                              style={styles.popupMenuItem}
-                            >
-                              <Text style={[styles.popupMenuText, { color: "#f44336" }]}>
-                                Xóa
-                              </Text>
-                            </Pressable>
-                          </View>
-                        </TouchableOpacity>
-                      )}
+                  {menuVisibleForId === fb.id && isOwner && (
+                    <View style={styles.menuOptions}>
+                      <TouchableOpacity
+                        onPress={() => startEditing(fb)}
+                        style={styles.menuOptions}
+                      >
+                        <Text style={styles.menuOptions}>Sửa</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => deleteFeedback(fb.id)}
+                        style={[styles.menuOptions, { borderTopWidth: 1, borderTopColor: "#ccc" }]}
+                      >
+                        <Text style={[styles.menuOptions, { color: "red" }]}>Xóa</Text>
+                      </TouchableOpacity>
                     </View>
                   )}
-                </View>
 
-                <Text style={styles.feedbackComment}>{fb.comment}</Text>
-              </View>
-            ))
+                  {/* If editing this feedback, show editing inputs */}
+                  {isEditingThis ? (
+                    <View style={styles.editingContainer}>
+                      <View style={styles.ratingStars}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Pressable
+                            key={star}
+                            onPress={() => setEditingRating(star)}
+                            hitSlop={8}
+                            style={{ marginRight: 6 }}
+                          >
+                            <Ionicons
+                              name={star <= editingRating ? "star" : "star-outline"}
+                              size={24}
+                              color="#f1c40f"
+                            />
+                          </Pressable>
+                        ))}
+                      </View>
+                      <TextInput
+                        style={styles.textInput}
+                        multiline
+                        value={editingComment}
+                        onChangeText={setEditingComment}
+                        editable={!processingEdit}
+                      />
+                      <View style={styles.editButtons}>
+                        <TouchableOpacity
+                          onPress={saveEditing}
+                          style={[styles.sendButton, { flex: 1, marginRight: 5 }]}
+                          disabled={processingEdit}
+                        >
+                          {processingEdit ? (
+                            <ActivityIndicator color="#fff" />
+                          ) : (
+                            <Text style={styles.sendButtonText}>Lưu</Text>
+                          )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={cancelEditing}
+                          style={[
+                            styles.sendButton,
+                            { flex: 1, backgroundColor: "#ccc", marginLeft: 5 },
+                          ]}
+                          disabled={processingEdit}
+                        >
+                          <Text style={[styles.sendButtonText, { color: "#333" }]}>
+                            Hủy
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    <>
+                      <View style={styles.ratingStars}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Ionicons
+                            key={star}
+                            name={star <= fb.rating ? "star" : "star-outline"}
+                            size={20}
+                            color="#f1c40f"
+                          />
+                        ))}
+                      </View>
+                      <Text style={styles.feedbackComment}>{fb.comment}</Text>
+                    </>
+                  )}
+                </View>
+              );
+            })
           )}
         </View>
       </View>
@@ -445,152 +456,139 @@ export default function FoodDetail() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 10, backgroundColor: "#fff" },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingHorizontal: 12,
+  },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 16,
   },
   header: {
+    paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
-    marginBottom: 10,
     justifyContent: "space-between",
   },
-  headerTitle: { fontSize: 20, fontWeight: "600", color: "#3f51b5" },
-
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#3f51b5",
+  },
   image: {
     width: "100%",
     height: 220,
     borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: "#eee",
   },
   noImage: {
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#eee",
   },
-
   content: {
-    marginVertical: 12,
+    flex: 1,
   },
   name: {
-    fontSize: 22,
-    fontWeight: "bold",
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 8,
   },
   price: {
     fontSize: 20,
-    marginVertical: 10,
-    color: "#f57c00",
-    fontWeight: "600",
+    color: "#e74c3c",
+    marginBottom: 12,
   },
   addToCartButton: {
     backgroundColor: "#3f51b5",
-    borderRadius: 10,
+    borderRadius: 8,
     paddingVertical: 12,
     alignItems: "center",
-    marginTop: 10,
+    marginBottom: 20,
   },
   addToCartText: {
-    color: "#fff",
+    color: "white",
+    fontSize: 18,
     fontWeight: "600",
-    fontSize: 16,
   },
-
   feedbackSection: {
-    marginTop: 20,
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 12,
+    fontWeight: "700",
+    marginBottom: 8,
   },
-
-  ratingInputRow: {
+  ratingStars: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 8,
   },
-
-  input: {
-    minHeight: 50,
-    borderColor: "#ccc",
+  textInput: {
     borderWidth: 1,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    marginBottom: 10,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    minHeight: 60,
     textAlignVertical: "top",
+    backgroundColor: "#fafafa",
   },
   sendButton: {
     backgroundColor: "#3f51b5",
-    paddingVertical: 12,
     borderRadius: 8,
+    paddingVertical: 10,
+    marginTop: 10,
     alignItems: "center",
   },
   sendButtonText: {
-    color: "#fff",
+    color: "white",
     fontWeight: "600",
     fontSize: 16,
   },
-
-  editButtonsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  feedbackList: {
+    marginBottom: 40,
   },
-
   feedbackItem: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    paddingVertical: 10,
+    backgroundColor: "#f7f7f7",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
   },
   feedbackHeader: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 6,
   },
   feedbackUser: {
-    fontWeight: "600",
-    marginRight: 10,
-  },
-  feedbackRating: {
-    flexDirection: "row",
-    marginRight: "auto",
+    fontWeight: "700",
+    color: "#333",
   },
   feedbackComment: {
-    marginTop: 4,
+    fontSize: 16,
+    marginTop: 6,
+    color: "#555",
   },
-
-  menuWrapper: {
-    position: "relative",
-  },
-  menuButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  menuOverlay: {
+  menuOptions: {
     position: "absolute",
     top: 30,
-    right: 0,
-    backgroundColor: "rgba(0,0,0,0.1)",
-    width: 120,
-    borderRadius: 8,
-    zIndex: 1000,
-  },
-  popupMenu: {
+    right: 10,
     backgroundColor: "#fff",
-    borderRadius: 8,
-    elevation: 5,
+    borderRadius: 6,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    paddingVertical: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4
   },
-  popupMenuItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+  editingContainer: {
+    backgroundColor: "#e0e0e0",
+    borderRadius: 10,
+    padding: 10,
   },
-  popupMenuText: {
-    fontSize: 16,
+  editButtons: {
+    flexDirection: "row",
+    marginTop: 10,
   },
 });

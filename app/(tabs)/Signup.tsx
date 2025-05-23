@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { auth } from "../../firebaseConfig";
 
 export default function SignUpScreen() {
@@ -28,36 +28,49 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Restaurant App</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <View style={styles.logoContainer}>
+        <Text style={styles.title}>Restaurant App</Text>
+      </View>
 
-      <TextInput
-        placeholder="Enter your email"
-        placeholderTextColor="#aaa"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          placeholder="Email"
+          placeholderTextColor="#aaa"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          textContentType="emailAddress"
+        />
 
-      <TextInput
-        placeholder="Enter your password"
-        placeholderTextColor="#aaa"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        style={styles.input}
-      />
+        <TextInput
+          placeholder="Password"
+          placeholderTextColor="#aaa"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          style={styles.input}
+          autoComplete="password"
+          textContentType="password"
+        />
 
-      <TextInput
-        placeholder="Confirm password"
-        placeholderTextColor="#aaa"
-        secureTextEntry
-        value={confirm}
-        onChangeText={setConfirm}
-        style={styles.input}
-      />
+        <TextInput
+          placeholder="Confirm Password"
+          placeholderTextColor="#aaa"
+          secureTextEntry
+          value={confirm}
+          onChangeText={setConfirm}
+          style={styles.input}
+          autoComplete="password"
+          textContentType="password"
+        />
+      </View>
 
       <TouchableOpacity style={[styles.button, styles.signUp]} onPress={handleRegister}>
         <Text style={styles.signUpText}>Register</Text>
@@ -66,49 +79,65 @@ export default function SignUpScreen() {
       <TouchableOpacity onPress={() => router.push("/Login")}>
         <Text style={styles.loginLink}>Already have an account? Sign In</Text>
       </TouchableOpacity>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f0f4f8",
     paddingHorizontal: 30,
     justifyContent: "center",
   },
+  logoContainer: {
+    marginBottom: 40,
+    alignItems: "center",
+  },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: "bold",
     color: "crimson",
-    textAlign: "center",
-    marginBottom: 40,
+    letterSpacing: 1.5,
+  },
+  inputContainer: {
+    marginBottom: 20,
   },
   input: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 30,
     fontSize: 16,
-    marginBottom: 20,
-    paddingVertical: 8,
-    color: "#000",
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+    color: "#333",
   },
   button: {
     paddingVertical: 15,
     borderRadius: 30,
     alignItems: "center",
     marginBottom: 15,
+    shadowColor: "#3f51b5",
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   signUp: {
     backgroundColor: "#3f51b5",
   },
   signUpText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
   },
   loginLink: {
     textAlign: "center",
-    color: "#555",
+    color: "#3f51b5",
+    fontWeight: "600",
     marginTop: 10,
   },
 });

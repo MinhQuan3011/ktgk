@@ -111,16 +111,16 @@ export default function CategoryItems() {
     <View style={styles.container}>
       {/* Header with Back Icon */}
       <View style={styles.header}>
-  <TouchableOpacity onPress={() => router.push("/")}>
-    <Ionicons name="arrow-back" size={28} color="#3f51b5" />
-  </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push("/")}>
+            <Ionicons name="arrow-back" size={28} color="#3f51b5" />
+          </TouchableOpacity>
 
-  <Text style={styles.headerTitle}>{category}</Text>
+          <Text style={styles.headerTitle}>{category}</Text>
 
-  <TouchableOpacity onPress={() => router.push("/cart")}>
-    <CartIconWithBadge />
-  </TouchableOpacity>
-</View>
+          <TouchableOpacity onPress={() => router.push("/cart")}>
+            <CartIconWithBadge />
+          </TouchableOpacity>
+        </View>
 
        
       <FlatList

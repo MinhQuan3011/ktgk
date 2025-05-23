@@ -1,11 +1,102 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { auth } from "../../firebaseConfig";
 import CartIconWithBadge from "./cartIconWithBadge";
 
+import * as ImagePicker from "expo-image-picker";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { db } from "../../firebaseConfig";
+
 export default function UserProfile() {
   const user = auth.currentUser;
+  const userId = user?.uid;
+
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    const fetchAvatar = async () => {
+      try {
+        const userDocRef = doc(db, "users", userId!);
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.avatar) setAvatar(data.avatar);
+        }
+      } catch (error) {
+        console.log("Lỗi lấy avatar:", error);
+        Alert.alert("Lỗi", "Không thể lấy ảnh đại diện. Xem console để biết thêm chi tiết.");
+      }
+    };
+    fetchAvatar();
+  }, [userId]);
+
+  const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert("Cần quyền truy cập thư viện ảnh để chọn avatar");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      try {
+        setLoading(true);
+
+        const uri = result.assets[0].uri;
+        const formData = new FormData();
+
+        formData.append("file", {
+          uri,
+          type: "image/jpeg",
+          name: "avatar.jpg",
+        } as any);
+
+        formData.append("upload_preset", "upload-gp2hjdke");
+        formData.append("cloud_name", "dub6szgve");
+
+        const response = await fetch("https://api.cloudinary.com/v1_1/dub6szgve/image/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const cloudinaryData = await response.json();
+        if (cloudinaryData.secure_url) {
+          const downloadURL = cloudinaryData.secure_url;
+          setAvatar(downloadURL);
+
+          // Cập nhật Firestore với kiểm tra tài liệu tồn tại
+          const userDocRef = doc(db, "users", userId!);
+          const docSnap = await getDoc(userDocRef);
+
+          if (docSnap.exists()) {
+            await updateDoc(userDocRef, { avatar: downloadURL });
+          } else {
+            await setDoc(userDocRef, { avatar: downloadURL });
+          }
+        } else {
+          throw new Error("Không thể lấy URL ảnh từ Cloudinary.");
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.log("Chi tiết lỗi:", error);
+          Alert.alert("Lỗi tải ảnh lên", error.message);
+        } else {
+          console.log("Chi tiết lỗi:", error);
+          Alert.alert("Lỗi tải ảnh lên", String(error));
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   if (!user) {
     return (
@@ -19,8 +110,12 @@ export default function UserProfile() {
     try {
       await auth.signOut();
       router.replace("/Login");
-    } catch (error) {
-      Alert.alert("Đăng xuất thất bại", (error as Error).message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        Alert.alert("Đăng xuất thất bại", error.message);
+      } else {
+        Alert.alert("Đăng xuất thất bại", String(error));
+      }
     }
   };
 
@@ -45,6 +140,31 @@ export default function UserProfile() {
           <CartIconWithBadge />
         </View>
       </View>
+
+      {/* Avatar */}
+      <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage} disabled={loading}>
+        {loading ? (
+          <ActivityIndicator size="large" color="crimson" />
+        ) : avatar ? (
+          <Image source={{ uri: avatar }} style={styles.avatar} />
+        ) : (
+          <Ionicons name="person-circle" size={100} color="gray" />
+        )}
+      </TouchableOpacity>
+      <Text style={styles.changeAvatarText}>Nhấn để thay đổi ảnh đại diện</Text>
+
+      {/* Icons: Lịch sử mua hàng & Đánh giá của tôi */}
+      <View style={styles.iconRow}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => router.push("/lichsumua")}>
+          <Ionicons name="time-outline" size={40} color="crimson" />
+          <Text style={styles.iconText}>Lịch sử mua hàng</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.iconButton} onPress={() => router.push("/userReviews")}>
+          <Ionicons name="star-outline" size={40} color="crimson" />
+          <Text style={styles.iconText}>Đánh giá của tôi</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -55,11 +175,13 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingHorizontal: 20,
     backgroundColor: "#fff",
+    alignItems: "center",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    width: "100%",
     marginBottom: 20,
   },
   headerTitle: {
@@ -77,5 +199,35 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 15,
     color: "#444",
+  },
+  avatarWrapper: {
+    borderRadius: 100,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "crimson",
+    marginBottom: 10,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+  },
+  changeAvatarText: {
+    color: "gray",
+    marginBottom: 30,
+  },
+  iconRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+  },
+  iconButton: {
+    alignItems: "center",
+    flex: 1,
+  },
+  iconText: {
+    marginTop: 8,
+    fontSize: 16,
+    color: "crimson",
+    fontWeight: "600",
   },
 });
