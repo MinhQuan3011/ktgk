@@ -1,7 +1,7 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
@@ -77,22 +77,20 @@ export default function Home() {
   };
 
   // Lấy dữ liệu menu từ Firestore 1 lần duy nhất khi component mount
-  useEffect(() => {
-    const initData = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "menu"));
-        const data: MenuItem[] = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<MenuItem, "id">),
-        }));
-        setMenuData(data);
-      } catch (error) {
-        console.error("Lỗi khi load dữ liệu:", error);
-      }
-    };
+useEffect(() => {
+  const unsubscribe = onSnapshot(collection(db, "menu"), (querySnapshot) => {
+    const data: MenuItem[] = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<MenuItem, "id">),
+    }));
+    setMenuData(data);
+  }, (error) => {
+    console.error("Lỗi khi lắng nghe dữ liệu:", error);
+  });
 
-    initData();
-  }, []);
+  // Cleanup listener khi component unmount
+  return () => unsubscribe();
+}, []);
 
   // Lọc menuData theo searchQuery
   const filteredMenuData = menuData.filter((item) =>
