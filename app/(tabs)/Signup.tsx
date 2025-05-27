@@ -1,31 +1,40 @@
 import { router } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { auth } from "../../firebaseConfig";
+import { auth, db } from "../../firebaseConfig";
 
 export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
-  const handleRegister = async () => {
-    if (!email || !password || !confirm) {
-      return Alert.alert("Please fill all fields");
-    }
+const handleRegister = async () => {
+  if (!email || !password || !confirm) {
+    return Alert.alert("Please fill all fields");
+  }
 
-    if (password !== confirm) {
-      return Alert.alert("Passwords do not match");
-    }
+  if (password !== confirm) {
+    return Alert.alert("Passwords do not match");
+  }
 
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert("Đăng kí thành công");
-      router.push("/Login"); // quay lại trang đăng nhập
-    } catch (error: any) {
-      Alert.alert("Registration failed", error.message);
-    }
-  };
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    //  Lưu vai trò và email vào Firestore
+    await setDoc(doc(db, "users", user.uid), {
+      email: email,
+      role: "user", //  Hoặc "admin" nếu bạn muốn chỉ định tài khoản là admin
+    });
+
+    Alert.alert("Đăng kí thành công");
+    router.push("/Login");
+  } catch (error: any) {
+    Alert.alert("Registration failed", error.message);
+  }
+};
 
   return (
     <KeyboardAvoidingView

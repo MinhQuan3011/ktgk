@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import {
   Alert,
@@ -11,31 +12,40 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { auth } from "../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
 import { useCartStore } from "./(tabs)/store";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      return Alert.alert("Please enter email and password");
-    }
+const handleLogin = async () => {
+  if (!email || !password) {
+    return Alert.alert("Please enter email and password");
+  }
 
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
+    // Lấy role từ Firestore
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    const userData = userDoc.data();
+
+    if (userData?.role === "admin") {
+      // Điều hướng đến giao diện admin nếu là admin
+      router.replace("/");
+    } else {
       await useCartStore.getState().fetchCartFromFirestore();
-
-      Alert.alert("Đăng nhập thành công");
-      router.replace("/"); // Chuyển về trang chính sau đăng nhập
-    } catch (error: any) {
-      console.error("Login error:", error);
-      Alert.alert("Đăng nhập thất bại", error.message);
+      router.replace("/"); // Trang chính
     }
-  };
+
+    Alert.alert("Đăng nhập thành công");
+  } catch (error: any) {
+    console.error("Login error:", error);
+    Alert.alert("Đăng nhập thất bại", error.message);
+  }
+};
 
   return (
     <KeyboardAvoidingView

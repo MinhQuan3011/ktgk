@@ -1,41 +1,50 @@
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { auth } from "../../firebaseConfig";
-import CartIconWithBadge from "./cartIconWithBadge";
-
 import * as ImagePicker from "expo-image-picker";
+import { router } from "expo-router";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { db } from "../../firebaseConfig";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { auth, db } from "../../firebaseConfig";
+import CartIconWithBadge from "./cartIconWithBadge";
 
 export default function UserProfile() {
   const user = auth.currentUser;
   const userId = user?.uid;
 
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
-    const fetchAvatar = async () => {
+    const fetchUserData = async () => {
       try {
-        const userDocRef = doc(db, "users", userId!);
+        const userDocRef = doc(db, "users", userId);
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.avatar) setAvatar(data.avatar);
+          if (data.role) setRole(data.role);
         }
       } catch (error) {
-        console.log("Lỗi lấy avatar:", error);
-        Alert.alert("Lỗi", "Không thể lấy ảnh đại diện. Xem console để biết thêm chi tiết.");
+        console.log("Lỗi lấy thông tin người dùng:", error);
+        Alert.alert("Lỗi", "Không thể lấy thông tin người dùng.");
       }
     };
-    fetchAvatar();
+    fetchUserData();
   }, [userId]);
 
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert("Cần quyền truy cập thư viện ảnh để chọn avatar");
       return;
@@ -62,17 +71,19 @@ export default function UserProfile() {
         formData.append("upload_preset", "upload-gp2hjdke");
         formData.append("cloud_name", "dub6szgve");
 
-        const response = await fetch("https://api.cloudinary.com/v1_1/dub6szgve/image/upload", {
-          method: "POST",
-          body: formData,
-        });
+        const response = await fetch(
+          "https://api.cloudinary.com/v1_1/dub6szgve/image/upload",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
 
         const cloudinaryData = await response.json();
         if (cloudinaryData.secure_url) {
           const downloadURL = cloudinaryData.secure_url;
           setAvatar(downloadURL);
 
-          // Cập nhật Firestore với kiểm tra tài liệu tồn tại
           const userDocRef = doc(db, "users", userId!);
           const docSnap = await getDoc(userDocRef);
 
@@ -142,7 +153,11 @@ export default function UserProfile() {
       </View>
 
       {/* Avatar */}
-      <TouchableOpacity style={styles.avatarWrapper} onPress={pickImage} disabled={loading}>
+      <TouchableOpacity
+        style={styles.avatarWrapper}
+        onPress={pickImage}
+        disabled={loading}
+      >
         {loading ? (
           <ActivityIndicator size="large" color="crimson" />
         ) : avatar ? (
@@ -151,16 +166,35 @@ export default function UserProfile() {
           <Ionicons name="person-circle" size={100} color="gray" />
         )}
       </TouchableOpacity>
-      <Text style={styles.changeAvatarText}>Nhấn để thay đổi ảnh đại diện</Text>
 
-      {/* Icons: Lịch sử mua hàng & Đánh giá của tôi */}
+      <Text style={styles.changeAvatarText}>
+        Nhấn để thay đổi ảnh đại diện
+      </Text>
+
+      {/* Thông tin email và vai trò */}
+      <View style={{ alignItems: "center", marginBottom: 30 }}>
+        {role === "admin" && (
+          <Text style={{ color: "crimson", fontWeight: "bold", fontSize: 16 }}>
+            Admin
+          </Text>
+        )}
+        <Text style={{ fontSize: 16, color: "#333" }}>{user.email}</Text>
+      </View>
+
+      {/* Icon chức năng */}
       <View style={styles.iconRow}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.push("/lichsumua")}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => router.push("/lichsumua")}
+        >
           <Ionicons name="time-outline" size={40} color="crimson" />
           <Text style={styles.iconText}>Lịch sử mua hàng</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.iconButton} onPress={() => router.push("/userReviews")}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => router.push("/userReviews")}
+        >
           <Ionicons name="star-outline" size={40} color="crimson" />
           <Text style={styles.iconText}>Đánh giá của tôi</Text>
         </TouchableOpacity>
@@ -213,7 +247,7 @@ const styles = StyleSheet.create({
   },
   changeAvatarText: {
     color: "gray",
-    marginBottom: 30,
+    marginBottom: 10,
   },
   iconRow: {
     flexDirection: "row",

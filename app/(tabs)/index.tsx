@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { auth, db } from "../../firebaseConfig";
 import CartIconWithBadge from "./cartIconWithBadge";
-import { seedMenuData } from "./seedMenuData";
 
 // Define types
 type MenuItem = {
@@ -31,7 +30,7 @@ type Category = {
   image: any;
 };
 
-const categories = [
+const categories: Category[] = [
   { title: "Chinese", image: require("@/assets/images/lautuxuyen.jpg") },
   { title: "Japan", image: require("@/assets/images/launhatban.jpg") },
   { title: "Vietnam", image: require("@/assets/images/bundaumamtom.jpg") },
@@ -45,9 +44,9 @@ export default function Home() {
   const { category } = useLocalSearchParams();
 
   const [menuData, setMenuData] = useState<MenuItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState(""); // thêm state cho tìm kiếm
+  const [searchQuery, setSearchQuery] = useState(""); // state tìm kiếm
 
-  // Kiểm tra đăng nhập, nếu chưa thì chuyển về Login
+  // Kiểm tra đăng nhập
   useEffect(() => {
     if (!auth.currentUser) {
       router.replace("/Login");
@@ -77,11 +76,10 @@ export default function Home() {
     });
   };
 
+  // Lấy dữ liệu menu từ Firestore 1 lần duy nhất khi component mount
   useEffect(() => {
     const initData = async () => {
       try {
-        await seedMenuData();
-
         const querySnapshot = await getDocs(collection(db, "menu"));
         const data: MenuItem[] = querySnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -126,11 +124,11 @@ export default function Home() {
           style={styles.searchInput}
           placeholder="Bạn muốn ăn gì nè?"
           value={searchQuery}
-          onChangeText={setSearchQuery} // cập nhật khi nhập tìm kiếm
+          onChangeText={setSearchQuery} // cập nhật tìm kiếm
         />
       </View>
 
-      {/* Nếu có searchQuery thì hiển thị kết quả tìm kiếm */}
+      {/* Hiển thị kết quả tìm kiếm nếu có */}
       {searchQuery.length > 0 ? (
         <>
           <Text style={styles.subHeader}>
